@@ -3,4 +3,3 @@ description = Helper module that collect validation functions.
 core = 7.x
 package = sprbs
 dependencies[] = sprbs
-dependencies[] = email_verify
