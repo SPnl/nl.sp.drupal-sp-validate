@@ -14,7 +14,24 @@ function sp_validate_email($mail) {
     return;
   }
 
+  module_load_include('inc', 'email_verify', 'windows_compat');
+
   $host = drupal_substr(strchr($mail, '@'), 1);
+
+  // Exclude domains from check.
+  if (in_array($host, array(
+    'familiemanheim.nl',
+    'hotmail.com',
+    'hotmail.nl',
+    'outlook.com',
+    'live.nl',
+    'live.com',
+    'msn.com ',
+  ))) {
+    watchdog('spwebform_email_verify', 'Skipped check for domain: @host', array('@host' => $host));
+    return;
+  }
+
 
   // Let's see if we can find anything about this host in the DNS.
   if (!checkdnsrr($host . '.', 'MX') && !checkdnsrr($host . '.', 'ANY')) {
@@ -55,7 +72,7 @@ function sp_validate_email($mail) {
       // aol.com for instance).
       // Be on the safe side and accept the address, at least it has a valid
       // domain part.
-      watchdog('spwebform_email_verify', 'Could not verify email address at host @host: @out', array('@host' => $host, '@out' => $out));
+      watchdog('spwebform_email_verify', 'Could not verify email address (1) (' . $mail . ')at host @host: @out', array('@host' => $host, '@out' => $out));
       return;
     }
   }
@@ -89,7 +106,7 @@ function sp_validate_email($mail) {
   if (!preg_match("/^250/", $from)) {
     // Again, something went wrong before we could really test the address.
     // Be on the safe side and accept it.
-    watchdog('spwebform_email_verify', 'Could not verify email address at host @host: @from', array('@host' => $host, '@from' => $from));
+    watchdog('spwebform_email_verify', 'Could not verify email address (3) (' . $mail . ') at host @host: @from', array('@host' => $host, '@from' => $from));
     return;
   }
 
@@ -110,7 +127,7 @@ function sp_validate_email($mail) {
       // taken: mailbox unavailable".
       preg_match("/^4/", $to) && !preg_match("/^450/", $to)) {
     // In those cases, accept the email, but log a warning.
-    watchdog('spwebform_email_verify', 'Could not verify email address at host @host: @to', array('@host' => $host, '@to' => $to));
+    watchdog('spwebform_email_verify', 'Could not verify email address (4) (' . $mail . ') at host @host: @to', array('@host' => $host, '@to' => $to));
     return;
   }
 
